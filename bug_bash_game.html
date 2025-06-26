@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Bug Bash!</title>
   <style>
     body {
@@ -21,6 +21,16 @@
     #score, #timer {
       font-size: 1.5rem;
       margin: 10px;
+    }
+
+    #timer.low-time {
+      color: #f66;
+      animation: flash 0.5s infinite;
+    }
+
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     #game-board {
@@ -63,6 +73,19 @@
       color: #f66;
     }
 
+    #restart-btn {
+      display: none;
+      margin-top: 20px;
+      font-size: 1.2rem;
+      padding: 10px 20px;
+      background-color: #8f8;
+      color: #111;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Arial Black', sans-serif;
+    }
+
     @keyframes fadeOut {
       to {
         opacity: 0;
@@ -80,6 +103,25 @@
         opacity: 1;
       }
     }
+
+    @media (max-width: 500px) {
+      #game-board {
+        grid-template-columns: repeat(3, 60px);
+        grid-template-rows: repeat(4, 60px);
+        gap: 15px;
+      }
+
+      .hole {
+        width: 60px;
+        height: 60px;
+      }
+
+      .bug {
+        top: 12px;
+        left: 16px;
+        font-size: 1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -88,7 +130,6 @@
   <h1>BUG BASH!</h1>
 
   <div id="game-board">
-    <!-- 12 holes -->
     <div class="hole" data-index="0"></div>
     <div class="hole" data-index="1"></div>
     <div class="hole" data-index="2"></div>
@@ -104,6 +145,8 @@
   </div>
 
   <div id="game-over">Game Over! Final Score: <span id="final-score"></span></div>
+  <button id="restart-btn">Play Again</button>
+  <audio id="splat-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.wav"></audio>
 
   <script>
     const holes = document.querySelectorAll('.hole');
@@ -111,12 +154,26 @@
     const timerDisplay = document.getElementById('timer');
     const gameOverDisplay = document.getElementById('game-over');
     const finalScoreDisplay = document.getElementById('final-score');
+    const restartBtn = document.getElementById('restart-btn');
+    const splatSound = document.getElementById('splat-sound');
 
     let score = 0;
     let timeLeft = 30;
     let gameInterval;
     let bugInterval;
     let gameActive = true;
+
+    restartBtn.addEventListener('click', () => {
+      score = 0;
+      timeLeft = 30;
+      scoreDisplay.textContent = `Score: ${score}`;
+      timerDisplay.textContent = `Time: ${timeLeft}`;
+      timerDisplay.classList.remove('low-time');
+      gameOverDisplay.style.display = 'none';
+      restartBtn.style.display = 'none';
+      gameActive = true;
+      startGame();
+    });
 
     function startGame() {
       gameInterval = setInterval(updateTimer, 1000);
@@ -126,6 +183,9 @@
     function updateTimer() {
       timeLeft--;
       timerDisplay.textContent = `Time: ${timeLeft}`;
+      if (timeLeft <= 10) {
+        timerDisplay.classList.add('low-time');
+      }
       if (timeLeft <= 0) {
         endGame();
       }
@@ -137,7 +197,7 @@
       const index = Math.floor(Math.random() * holes.length);
       const hole = holes[index];
 
-      if (hole.innerHTML !== '') return; // Skip if already occupied
+      if (hole.innerHTML !== '') return;
 
       const bug = document.createElement('div');
       bug.classList.add('bug');
@@ -149,6 +209,7 @@
         score += 10;
         scoreDisplay.textContent = `Score: ${score}`;
         bug.remove();
+        splatSound.play();
 
         const splat = document.createElement('div');
         splat.classList.add('squashed');
@@ -168,6 +229,7 @@
       gameActive = false;
       gameOverDisplay.style.display = 'block';
       finalScoreDisplay.textContent = score;
+      restartBtn.style.display = 'inline-block';
     }
 
     startGame();
